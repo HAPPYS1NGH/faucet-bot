@@ -38,7 +38,7 @@ export async function isNewAccount(address: string) {
     const arbitrumBalance = await getBalance(address, "arbitrum");
     const mainnetBalance = await getBalance(address, "mainnet");
     return (
-      parseFloat(arbitrumBalance) < 0.001 || parseFloat(mainnetBalance) < 0.001
+      parseFloat(arbitrumBalance) < 0.001 && parseFloat(mainnetBalance) < 0.001
     );
   } catch (error) {
     console.error("Error in isNewAccount", error);
@@ -73,7 +73,7 @@ export async function sendTransaction(address: string, value: bigint) {
 export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
   console.log("GET request made");
   console.log("toAddress", address);
-  const RPC = process.env.ARBITRUM_SEPOLIA_RPC;
+  const RPC = `https://arb-sepolia.g.alchemy.com/v2/${process.env.ALCHEMY_KEY}`;
   if (!RPC) {
     throw new Error("RPC endpoint not found");
   }
@@ -89,6 +89,7 @@ export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
   // Subtract 436,000 blocks to get the block number almost 24 hours ago and convert to hex string
   const blockNumberHex = "0x" + (currentBlock - 436000n).toString(16);
   console.log("BLOCK NUMBER HEX", blockNumberHex);
+
   try {
     const res = await fetch(RPC, {
       method: "POST",
@@ -96,6 +97,7 @@ export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        id: 1,
         jsonrpc: "2.0",
         method: "alchemy_getAssetTransfers",
         params: [
@@ -108,6 +110,7 @@ export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
             order: "asc",
             withMetadata: true,
             excludeZeroValue: true,
+            maxCount: "0x3e8",
           },
         ],
       }),
@@ -119,15 +122,16 @@ export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
     console.log("DATA IN ARB SDK", data);
     console.log(data.result.transfers);
     for (const tx of data.result.transfers) {
-      let timestamp = BigInt(tx.metadata.blockTimestamp);
+      const date = new Date(tx.metadata.blockTimestamp);
+      const timestamp = BigInt(date.getTime() / 1000);
       console.log("TIMESTAMP", timestamp);
       if (currentTimestamp - timestamp > 86400n) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   } catch (error) {
     console.error("Error in getLastTransactionTimestampForAddress", error);
-    return false;
+    return true;
   }
 }
