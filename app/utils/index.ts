@@ -32,16 +32,27 @@ async function getBalance(address: string, chain: string) {
   return balanceAsEther;
 }
 
-// Function to return false if the user have more than 0.5 ETH
-export async function isUserPoor(address: string, chain: string) {
-  const balance = await getBalance(address, chain);
-  return parseFloat(balance) < 0.5;
+// Function to return false if the user has new account
+export async function isNewAccount(address: string) {
+  const arbitrumBalance = await getBalance(address, "arbitrum");
+  const mainnetBalance = await getBalance(address, "mainnet");
+  return (
+    parseFloat(arbitrumBalance) < 0.001 || parseFloat(mainnetBalance) < 0.001
+  );
 }
 
-export async function sendTransaction(address: string) {
+export async function alreadyAptFunds(address: string) {
+  const arbitrumBalance = await getBalance(address, "arbitrum-sepolia");
+  if (parseFloat(arbitrumBalance) > 0.5) {
+    return true;
+  }
+  return false;
+}
+
+export async function sendTransaction(address: string, value: bigint) {
   const hash = await walletClient.sendTransaction({
     to: address as `0x${string}`,
-    value: 10000000000000000n,
+    value: value,
   });
   return hash;
 }
