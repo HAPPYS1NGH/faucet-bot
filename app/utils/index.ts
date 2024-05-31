@@ -55,9 +55,8 @@ export async function sendTransaction(address: string, value: bigint) {
     value: value,
   });
   return hash;
-}
-// Suggest good name for this function
-export async function lastTokenDrippedWithin24Hours(address: `0x${string}`) {
+} // Suggest good name for this function
+export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
   console.log("GET request made");
   console.log("toAddress", address);
   const RPC = process.env.ARBITRUM_SEPOLIA_RPC;
@@ -70,8 +69,12 @@ export async function lastTokenDrippedWithin24Hours(address: `0x${string}`) {
   });
   const currentTimestamp = block.timestamp;
 
-  // suubstarct 4,36,000 blocks to get the block number alomost 24 hours ago in bigint
-  const blockNumber = currentBlock - 436000n;
+  console.log("CURRENT BLOCK", currentBlock);
+  console.log("CURRENT TIMESTAMP", currentTimestamp);
+
+  // Subtract 436,000 blocks to get the block number almost 24 hours ago and convert to hex string
+  const blockNumberHex = "0x" + (currentBlock - 436000n).toString(16);
+  console.log("BLOCK NUMBER HEX", blockNumberHex);
   try {
     const res = await fetch(RPC, {
       method: "POST",
@@ -83,7 +86,7 @@ export async function lastTokenDrippedWithin24Hours(address: `0x${string}`) {
         method: "alchemy_getAssetTransfers",
         params: [
           {
-            fromBlock: blockNumber,
+            fromBlock: blockNumberHex,
             toBlock: "latest",
             fromAddress: "0xd5Ba400e732b3d769aA75fc67649Ef4849774bb1",
             toAddress: address,
@@ -101,13 +104,13 @@ export async function lastTokenDrippedWithin24Hours(address: `0x${string}`) {
     const data = await res.json();
     console.log("DATA IN ARB SDK", data);
     console.log(data.result.transfers);
-    data.result.transfers.forEach((tx: any) => {
-      let timestamp = tx.metadata.blockTimestamp;
+    for (const tx of data.result.transfers) {
+      let timestamp = BigInt(tx.metadata.blockTimestamp);
       console.log("TIMESTAMP", timestamp);
       if (currentTimestamp - timestamp > 86400n) {
         return true;
       }
-    });
+    }
     return false;
   } catch (error) {
     console.error("Error in getLastTransactionTimestampForAddress", error);
