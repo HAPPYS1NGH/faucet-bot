@@ -18,6 +18,9 @@ export async function POST(req: NextRequest, res: NextResponse) {
   console.log("//// GOOD SIGNER");
 
   const webhookSecret = req.nextUrl.searchParams.get("secret");
+  console.log("webhookSecret:", webhookSecret);
+  console.log("process.env.WEBHOOK_SECRET:", process.env.WEBHOOK_SECRET);
+
   if (process.env.WEBHOOK_SECRET !== webhookSecret) {
     return NextResponse.json({ message: "invalid webhook" }, { status: 401 });
   }
