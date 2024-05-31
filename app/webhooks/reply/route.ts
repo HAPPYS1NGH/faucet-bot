@@ -58,6 +58,13 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const userAddress =
       hookData.data.author.verified_addresses.eth_addresses[0];
 
+    // Checks if the user does not have funds in the mainnet or arbitrum and limits the funds to 0.005 ETH for new users
+    if (await isNewAccount(userAddress)) {
+      replyMsg = "You are a new user, so transferring 0.005 ETH.";
+      fundsToSend = 5000000000000000n;
+      failed = false;
+    }
+
     console.log("userAddress:", userAddress);
     if (!userAddress) {
       replyMsg = "No ethereum address found for this user";
@@ -72,12 +79,6 @@ export async function POST(req: NextRequest, res: NextResponse) {
     if (await alreadyAptFunds(userAddress)) {
       replyMsg = "You already have more than 0.5 ETH, so not transferring.";
       failed = true;
-    }
-    // Checks if the user does not have funds in the mainnet or arbitrum and limits the funds to 0.005 ETH for new users
-    if (await isNewAccount(userAddress)) {
-      replyMsg = "You are a new user, so transferring 0.005 ETH.";
-      fundsToSend = 5000000000000000n;
-      failed = false;
     }
 
     if (!failed) {
@@ -96,7 +97,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     const reply = await neynarClient.publishCast(
       process.env.SIGNER_UUID,
-      `${replyMsg} @${hookData.data.author.username}`,
+      `${replyMsg} ${hookData.data.author.username}`,
       {
         replyTo: hookData.data.hash,
       }
@@ -110,7 +111,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     console.log(e);
     const reply = await neynarClient.publishCast(
       process.env.SIGNER_UUID || "",
-      `Error Occurred: @happysingh look into this`
+      `Error Occurred: happysingh look into this`
     );
     return NextResponse.json({
       message: reply,

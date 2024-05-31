@@ -34,27 +34,41 @@ async function getBalance(address: string, chain: string) {
 
 // Function to return false if the user has new account
 export async function isNewAccount(address: string) {
-  const arbitrumBalance = await getBalance(address, "arbitrum");
-  const mainnetBalance = await getBalance(address, "mainnet");
-  return (
-    parseFloat(arbitrumBalance) < 0.001 || parseFloat(mainnetBalance) < 0.001
-  );
+  try {
+    const arbitrumBalance = await getBalance(address, "arbitrum");
+    const mainnetBalance = await getBalance(address, "mainnet");
+    return (
+      parseFloat(arbitrumBalance) < 0.001 || parseFloat(mainnetBalance) < 0.001
+    );
+  } catch (error) {
+    console.error("Error in isNewAccount", error);
+    return false;
+  }
 }
 
 export async function alreadyAptFunds(address: string) {
-  const arbitrumBalance = await getBalance(address, "arbitrum-sepolia");
-  if (parseFloat(arbitrumBalance) > 0.5) {
-    return true;
+  try {
+    const arbitrumBalance = await getBalance(address, "arbitrum-sepolia");
+    if (parseFloat(arbitrumBalance) > 0.5) {
+      return true;
+    } else return false;
+  } catch (error) {
+    console.error("Error in alreadyAptFunds", error);
+    return false;
   }
-  return false;
 }
 
 export async function sendTransaction(address: string, value: bigint) {
-  const hash = await walletClient.sendTransaction({
-    to: address as `0x${string}`,
-    value: value,
-  });
-  return hash;
+  try {
+    const hash = await walletClient.sendTransaction({
+      to: address as `0x${string}`,
+      value: value,
+    });
+    return hash;
+  } catch (error) {
+    console.error("Error in sendTransaction", error);
+    return false;
+  }
 } // Suggest good name for this function
 export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
   console.log("GET request made");
