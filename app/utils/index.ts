@@ -104,7 +104,7 @@ export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
           {
             fromBlock: blockNumberHex,
             toBlock: "latest",
-            fromAddress: "0xd5Ba400e732b3d769aA75fc67649Ef4849774bb1",
+            fromAddress: "0x926a19D7429F9AD47b2cB2b0e5c46A9E69F05a3e",
             toAddress: address,
             category: ["external"],
             order: "asc",
@@ -125,11 +125,11 @@ export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
       const date = new Date(tx.metadata.blockTimestamp);
       const timestamp = BigInt(date.getTime() / 1000);
       console.log("TIMESTAMP", timestamp);
-      if (currentTimestamp - timestamp > 86400n) {
-        return false;
+      if (currentTimestamp - timestamp < 86400n) {
+        return true;
       }
     }
-    return true;
+    return false;
   } catch (error) {
     console.error("Error in getLastTransactionTimestampForAddress", error);
     return true;
