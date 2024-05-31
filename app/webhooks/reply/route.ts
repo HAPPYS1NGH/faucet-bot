@@ -8,22 +8,15 @@ import { Cast as CastV2 } from "@neynar/nodejs-sdk/build/neynar-api/v2/openapi-f
  */
 export async function POST(req: NextRequest, res: NextResponse) {
   console.log("//////////////////////////");
-  console.log("req.nextUrl:", req.nextUrl);
+  console.log("req.nextUrl:", req);
 
   if (!process.env.SIGNER_UUID || !process.env.NEYNAR_API_KEY) {
     throw new Error(
       "Make sure you set SIGNER_UUID and NEYNAR_API_KEY in your .env file"
     );
   }
-  console.log("//// GOOD SIGNER");
 
   const webhookSecret = req.nextUrl.searchParams.get("secret");
-  console.log("webhookSecret:", webhookSecret);
-  console.log("process.env.WEBHOOK_SECRET:", process.env.WEBHOOK_SECRET);
-
-  if (process.env.WEBHOOK_SECRET !== webhookSecret) {
-    return NextResponse.json({ message: "invalid webhook" }, { status: 401 });
-  }
 
   const hookData = (await req.json()) as {
     created_at: number;
@@ -44,7 +37,9 @@ export async function POST(req: NextRequest, res: NextResponse) {
     }
   );
   console.log("reply:", reply);
-
+  if (process.env.WEBHOOK_SECRET !== webhookSecret) {
+    return NextResponse.json({ message: "invalid webhook" }, { status: 401 });
+  }
   return NextResponse.json({
     message: reply,
   });
