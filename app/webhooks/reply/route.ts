@@ -7,11 +7,15 @@ import { Cast as CastV2 } from "@neynar/nodejs-sdk/build/neynar-api/v2/openapi-f
  * One way to do this is to use a neynar webhook.
  */
 export async function POST(req: NextRequest, res: NextResponse) {
+  console.log("//////////////////////////");
+  console.log("req.nextUrl:", req.nextUrl);
+
   if (!process.env.SIGNER_UUID || !process.env.NEYNAR_API_KEY) {
     throw new Error(
       "Make sure you set SIGNER_UUID and NEYNAR_API_KEY in your .env file"
     );
   }
+  console.log("//// GOOD SIGNER");
 
   const webhookSecret = req.nextUrl.searchParams.get("secret");
   if (process.env.WEBHOOK_SECRET !== webhookSecret) {
