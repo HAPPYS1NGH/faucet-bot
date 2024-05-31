@@ -45,3 +45,9 @@ export const arbitrumClient = createPublicClient({
     http("https://eth-arbitrum.public.blastapi.io"),
   ]),
 });
+
+export const walletClient = createWalletClient({
+  account,
+  chain: arbitrumSepolia,
+  transport: http(arbitrumSepoliaRpc),
+});
