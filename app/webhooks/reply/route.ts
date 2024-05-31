@@ -8,7 +8,9 @@ import { Cast as CastV2 } from "@neynar/nodejs-sdk/build/neynar-api/v2/openapi-f
  */
 export async function POST(req: NextRequest, res: NextResponse) {
   console.log("//////////////////////////");
-  console.log("req.nextUrl:", req);
+  console.log("req.body:", req.body);
+  console.log("req.bodyUsed:", req.bodyUsed);
+  console.log("req.credentials:", req.credentials);
 
   if (!process.env.SIGNER_UUID || !process.env.NEYNAR_API_KEY) {
     throw new Error(
