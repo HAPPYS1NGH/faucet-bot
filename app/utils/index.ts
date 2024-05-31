@@ -56,14 +56,10 @@ export async function sendTransaction(address: string, value: bigint) {
   });
   return hash;
 }
-
-async function getLastTransactionTimestampForAddress(
-  address: `0x${string}`,
-  network: string
-) {
+// Suggest good name for this function
+export async function lastTokenDrippedWithin24Hours(address: `0x${string}`) {
   console.log("GET request made");
   console.log("toAddress", address);
-  console.log("network", network);
   const RPC = process.env.ARBITRUM_SEPOLIA_RPC;
   if (!RPC) {
     throw new Error("RPC endpoint not found");
@@ -108,7 +104,7 @@ async function getLastTransactionTimestampForAddress(
     data.result.transfers.forEach((tx: any) => {
       let timestamp = tx.metadata.blockTimestamp;
       console.log("TIMESTAMP", timestamp);
-      if (timestamp > currentTimestamp - 86400n) {
+      if (currentTimestamp - timestamp > 86400n) {
         return true;
       }
     });
