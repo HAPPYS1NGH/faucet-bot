@@ -87,7 +87,11 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     const reply = await neynarClient.publishCast(
       process.env.SIGNER_UUID,
-      `${replyMsg} ${hookData.data.author.username}`,
+      `${replyMsg} @${hookData.data.author.username} ${
+        failed
+          ? "❌ \n You can get faucets from here:  https://warpcast.com/happysingh/0x59b89007"
+          : "✅"
+      }`,
       {
         replyTo: hookData.data.hash,
       }
@@ -101,7 +105,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     console.log(e);
     const reply = await neynarClient.publishCast(
       process.env.SIGNER_UUID || "",
-      `Error Occurred: happysingh look into this`
+      `Error Occurred: @happysingh look into this`
     );
     return NextResponse.json({
       message: reply,
