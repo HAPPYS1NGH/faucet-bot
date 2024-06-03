@@ -1,12 +1,12 @@
 import { abi } from "./abi";
 import { arbitrumSepolia, baseSepolia } from "./address";
 
-export const contracts = {
-  baseSepolia: {
+export const config = {
+  "base-sepolia": {
     address: baseSepolia,
     abi,
   },
-  arbitrumSepolia: {
+  "arbitrum-sepolia": {
     address: arbitrumSepolia,
     abi,
   },
