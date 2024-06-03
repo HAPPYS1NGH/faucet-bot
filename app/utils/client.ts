@@ -1,4 +1,10 @@
-import { createPublicClient, http, fallback, createWalletClient } from "viem";
+import {
+  createPublicClient,
+  http,
+  fallback,
+  createWalletClient,
+  publicActions,
+} from "viem";
 import {
   sepolia,
   baseSepolia,
@@ -67,8 +73,32 @@ export const baseClient = createPublicClient({
   transport: http(baseRpc),
 });
 
-export const walletClient = createWalletClient({
+export const walletArbitrumClient = createWalletClient({
   account,
   chain: arbitrumSepolia,
   transport: http(arbitrumSepoliaRpc),
-});
+}).extend(publicActions);
+
+export const walletBaseClient = createWalletClient({
+  account,
+  chain: baseSepolia,
+  transport: http(baseSepoliaRpc),
+}).extend(publicActions);
+// add default value of isWallet to false
+
+export function getChainClient(chain: string, isWallet = false) {
+  switch (chain) {
+    case "sepolia":
+      return sepoliaClient;
+    case "mainnet":
+      return mainnetClient;
+    case "arbitrum":
+      return arbitrumClient;
+    case "arbitrum-sepolia":
+      return isWallet ? walletArbitrumClient : arbitrumSepoliaClient;
+    case "base-sepolia":
+      return isWallet ? walletBaseClient : baseSepoliaClient;
+    default:
+      throw new Error(`Unsupported chain ${chain}`);
+  }
+}
