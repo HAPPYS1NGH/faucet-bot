@@ -6,7 +6,7 @@ export const isTokenDrippedToAddressInLast24Hours = async (
   network: network
 ) => {
   const contract = config[network];
-  const client = getChainClient(network);
+  const client: any = getChainClient(network);
   console.log("client", client);
   const hasReceivedWithin24Hours = client.readContract({
     address: contract.address as `0x${string}`,
@@ -22,7 +22,7 @@ export const isTokenDrippedToFidInLast24Hours = async (
   network: network
 ) => {
   const contract = config[network];
-  const client = getChainClient(network);
+  const client: any = getChainClient(network);
 
   const hasReceivedWithin24Hours = client.readContract({
     address: contract.address as `0x${string}`,
@@ -38,7 +38,7 @@ export const isBalanceAboveThreshold = async (
   network: network
 ) => {
   const contract = config[network];
-  const client = getChainClient(network);
+  const client: any = getChainClient(network);
 
   const hasEnoughFunds = client.readContract({
     address: contract.address as `0x${string}`,
@@ -52,14 +52,14 @@ export const isBalanceAboveThreshold = async (
 export const dripTokensToAddress = async (
   to: string,
   fid: number,
-  amount: BigInt,
+  amount: bigint,
   network: network
 ) => {
   try {
     console.log("dripTokensToAddress", to, fid, amount, network);
 
     const contract = config[network];
-    const client = getChainClient(network, true);
+    const client: any = getChainClient(network, true);
     const { request } = await client.simulateContract({
       address: contract.address as `0x${string}`,
       abi: contract.abi,
