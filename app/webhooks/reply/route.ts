@@ -4,10 +4,15 @@ import { Cast as CastV2 } from "@neynar/nodejs-sdk/build/neynar-api/v2/openapi-f
 import { createHmac } from "crypto";
 import {
   isNewAccount,
-  alreadyAptFunds,
-  sendTransaction,
-  checkLastTokenDripWithin24Hours,
+  analyseCastText,
 } from "@/app/utils";
+import {
+  isTokenDrippedToAddressInLast24Hours,
+  isBalanceAboveThreshold,
+  isTokenDrippedToFidInLast24Hours,
+  dripTokensToAddress,
+} from "@/app/utils/contract";
+import { replyMessageError, replyMessageSuccess } from "@/app/constants";
 
 export async function POST(req: NextRequest, res: NextResponse) {
   console.log("//////////////////////////");
@@ -25,18 +30,18 @@ export async function POST(req: NextRequest, res: NextResponse) {
       );
     }
 
-    const sig = req.headers.get("X-Neynar-Signature");
-    if (!sig) {
-      throw new Error("Neynar signature missing from request headers");
-    }
+    // const sig = req.headers.get("X-Neynar-Signature");
+    // if (!sig) {
+    //   throw new Error("Neynar signature missing from request headers");
+    // }
 
-    const hmac = createHmac("sha512", webhookSecret);
-    hmac.update(body);
-    const generatedSignature = hmac.digest("hex");
+    // const hmac = createHmac("sha512", webhookSecret);
+    // hmac.update(body);
+    // const generatedSignature = hmac.digest("hex");
 
-    if (generatedSignature !== sig) {
-      throw new Error("Invalid webhook signature");
-    }
+    // if (generatedSignature !== sig) {
+    //   throw new Error("Invalid webhook signature");
+    // }
 
     const hookData = JSON.parse(body) as {
       created_at: number;
@@ -47,68 +52,161 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     let replyMsg = "";
     let failed = false;
-    let fundsToSend = 10000000000000000n;
+    let fundsToSend = 100000000000000000n;
 
-    const userAddress =
-      hookData.data.author.verified_addresses.eth_addresses[0];
+    const userAddress = hookData.data.author.verified_addresses.eth_addresses[0];
 
     if (!userAddress) {
-      replyMsg = "No ethereum address found for this user";
-      failed = true;
-    } else {
-      if (await isNewAccount(userAddress)) {
-        replyMsg = "You are a new user, so transferring 0.005 ETH.";
-        fundsToSend = 5000000000000000n;
-      }
-
-      if (await checkLastTokenDripWithin24Hours(userAddress as `0x${string}`)) {
-        replyMsg =
-          "You have already received funds in the last 24 hours, so not transferring.";
-        failed = true;
-      } else if (await alreadyAptFunds(userAddress)) {
-        replyMsg = "You already have more than 0.5 ETH, so not transferring.";
-        failed = true;
-      }
+      replyMsg = replyMessageError("no-address");
+      const reply = await publishAndExit(
+        replyMsg,
+        hookData.data.author.username,
+        hookData.data.hash
+      );
+      return NextResponse.json({
+        message: reply,
+      });
     }
 
-    if (!failed) {
-      try {
-        const hash = await sendTransaction(userAddress, fundsToSend);
-        if (!hash) {
-          throw new Error("Error sending transaction");
-        }
-        replyMsg += `  \nTransaction sent: https://sepolia.arbiscan.io/tx/${hash}`;
-      } catch (e) {
-        console.log("Error sending transaction:", e);
-        replyMsg = "Error sending you funds";
-        failed = true;
-      }
+    const network = await analyseCastText(hookData.data.text);
+
+    if (network === "not-found" || network === "both-found") {
+      replyMsg = replyMessageError("not-found");
+      const reply = await publishAndExit(
+        replyMsg,
+        hookData.data.author.username,
+        hookData.data.hash
+      );
+      return NextResponse.json({
+        message: reply,
+      });
     }
 
-    const reply = await neynarClient.publishCast(
-      process.env.SIGNER_UUID,
-      `${replyMsg} @${hookData.data.author.username} ${
-        failed
-          ? "❌ \n You can get faucets from here:  https://warpcast.com/happysingh/0x59b89007"
-          : "✅"
-      }`,
-      {
-        replyTo: hookData.data.hash,
-      }
+    const hasDrippedToAddress = await isTokenDrippedToAddressInLast24Hours(
+      userAddress,
+      network
     );
-    console.log("reply:", reply);
+    console.log("hasDrippedToAddress", hasDrippedToAddress);
 
-    return NextResponse.json({
-      message: reply,
-    });
+    if (hasDrippedToAddress) {
+      replyMsg = replyMessageError("already-dripped-to-address") + userAddress;
+      const reply = await publishAndExit(
+        replyMsg,
+        hookData.data.author.username,
+        hookData.data.hash
+      );
+      return NextResponse.json({
+        message: reply,
+      });
+    }
+
+    const hasDrippedToFID = await isTokenDrippedToFidInLast24Hours(
+      hookData.data.author.fid,
+      network
+    );
+    console.log("hasDrippedToFID", hasDrippedToFID);
+
+    if (hasDrippedToFID) {
+      replyMsg =
+        replyMessageError("already-dripped") + hookData.data.author.fid;
+      const reply = await publishAndExit(
+        replyMsg,
+        hookData.data.author.username,
+        hookData.data.hash
+      );
+      return NextResponse.json({
+        message: reply,
+      });
+    }
+
+    const hasEnoughFunds = await isBalanceAboveThreshold(userAddress, network);
+    console.log("hasEnoughFunds", hasEnoughFunds);
+    if (hasEnoughFunds) {
+      replyMsg = replyMessageError("enough-funds");
+      const reply = await publishAndExit(
+        replyMsg,
+        hookData.data.author.username,
+        hookData.data.hash
+      );
+      return NextResponse.json({
+        message: reply,
+      });
+    }
+
+    // TODO: Check if the person has mainnet balance than drip more
+    const isNew = await isNewAccount(userAddress, network);
+    console.log("isNew", isNew);
+    if (isNew) {
+      fundsToSend = 500000000000000000n;
+    }
+
+    console.log("///////////////////////");
+    console.log("DRIPPING TOKENS");
+    try {
+      const hash = await dripTokensToAddress(
+        userAddress,
+        hookData.data.author.fid,
+        fundsToSend,
+        network
+      );
+      console.log("hash", hash);
+      if (!hash) {
+        replyMsg = replyMessageError("error-sending-transaction");
+        const reply = await publishAndExit(
+          replyMsg,
+          hookData.data.author.username,
+          hookData.data.hash
+        );
+        return NextResponse.json({
+          message: reply,
+        });
+      }
+      replyMsg = replyMessageSuccess(network, fundsToSend, hash);
+
+      const reply = await publishAndExit(
+        replyMsg,
+        hookData.data.author.username,
+        hookData.data.hash
+      );
+      return NextResponse.json({
+        message: reply,
+      });
+    } catch (error) {
+      console.error("Error in dripTokensToAddress", error);
+      replyMsg = replyMessageError("error-sending-transaction");
+      const reply = await publishAndExit(
+        replyMsg,
+        hookData.data.author.username,
+        hookData.data.hash
+      );
+      return NextResponse.json({
+        message: reply,
+      });
+    }
+
   } catch (e) {
     console.log(e);
     const reply = await neynarClient.publishCast(
       process.env.SIGNER_UUID || "",
-      `Error Occurred: @happysingh look into this`
+      `Error Occurred: @happysingh look into this
+      \n Meanwhile \n You can get Arbitrum Sepolia faucet from here: https://warpcast.com/happysingh/0xfcb6dd55`
     );
     return NextResponse.json({
       message: reply,
     });
   }
+}
+
+async function publishAndExit(message: string, username: string, hash: string) {
+  if (process.env.SIGNER_UUID === undefined) {
+    throw new Error("SIGNER_UUID is not set in .env");
+  }
+  const reply = await neynarClient.publishCast(
+    process.env.SIGNER_UUID,
+    `${message} @${username}`,
+    { replyTo: hash }
+  );
+  console.log("reply:", reply);
+
+  return NextResponse.json({ message: reply });
 }
