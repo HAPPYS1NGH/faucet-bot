@@ -34,7 +34,7 @@ export const replyMessageError = (error: string) => {
     return `You have already received funds in the last 24 hours, so not transferring to the FID\t `;
   }
   if (error === "enough-funds") {
-    return `You already have more than 0.5 ETH, so not transferring.`;
+    return `You already have more than 0.1 ETH, so not transferring.`;
   }
   if (error === "error-sending-transaction") {
     return `Error sending transaction \n
