@@ -27,11 +27,11 @@ export const replyMessageError = (error: string) => {
   \n 6. You can only get faucet once in 24 hours.
   `;
   }
-  if (error === "already-dripped") {
-    return `You have already received funds in the last 24 hours, so not transferring for the address\t `;
-  }
   if (error === "already-dripped-to-address") {
-    return `You have already received funds in the last 24 hours, so not transferring for the fid\t `;
+    return `You have already received funds in the last 24 hours, so not transferring to the Address\t `;
+  }
+  if (error === "already-dripped-to-fid") {
+    return `You have already received funds in the last 24 hours, so not transferring to the FID\t `;
   }
   if (error === "enough-funds") {
     return `You already have more than 0.5 ETH, so not transferring.`;
