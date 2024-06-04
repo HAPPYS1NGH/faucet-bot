@@ -3,7 +3,9 @@ import {
   arbitrumSepoliaClient,
   mainnetClient,
   sepoliaClient,
-  walletClient,
+  baseClient,
+  baseSepoliaClient,
+  walletArbitrumClient,
 } from "@/app/utils/client";
 import { formatEther } from "viem";
 
@@ -21,6 +23,12 @@ async function getBalance(address: string, chain: string) {
       break;
     case "arbitrum":
       client = arbitrumClient;
+      break;
+    case "base":
+      client = baseClient;
+      break;
+    case "base-sepolia":
+      client = baseSepoliaClient;
       break;
     default:
       throw new Error(`Unsupported chain ${chain}`);
@@ -58,18 +66,19 @@ export async function alreadyAptFunds(address: string) {
   }
 }
 
-export async function sendTransaction(address: string, value: bigint) {
-  try {
-    const hash = await walletClient.sendTransaction({
-      to: address as `0x${string}`,
-      value: value,
-    });
-    return hash;
-  } catch (error) {
-    console.error("Error in sendTransaction", error);
-    return false;
-  }
-} // Suggest good name for this function
+// export async function sendTransaction(address: string, value: bigint) {
+//   try {
+//     const hash = await walletArbitrumClient.sendTransaction({
+//       to: address as `0x${string}`,
+//       value: value,
+//     });
+//     return hash;
+//   } catch (error) {
+//     console.error("Error in sendTransaction", error);
+//     return false;
+//   }
+// }
+// Suggest good name for this function
 export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
   console.log("GET request made");
   console.log("toAddress", address);
@@ -133,5 +142,53 @@ export async function checkLastTokenDripWithin24Hours(address: `0x${string}`) {
   } catch (error) {
     console.error("Error in getLastTransactionTimestampForAddress", error);
     return true;
+  }
+}
+
+export async function analyseCastText(data: string) {
+  const text = data.toLowerCase();
+
+  // Define regex patterns with broader matching for each faucet
+  const baseSepoliaPattern = /\b(b[a|e]s[ae]?|base[- ]?sepolia)\b/;
+  const arbitrumSepoliaPattern = /\b(a?r?b[i|t|r|u|m]*|arbitrum[- ]?sepolia)\b/;
+  // Check for words like how to use or guide
+  // const guidePattern = /\b(guide|how to use)\b/;
+
+  // Test the patterns against the input text
+  const isBaseSepolia = baseSepoliaPattern.test(text);
+  const isArbitrumSepolia = arbitrumSepoliaPattern.test(text);
+  console.log("isBaseSepolia", isBaseSepolia);
+  console.log("isArbitrumSepolia", isArbitrumSepolia);
+  if (isBaseSepolia && isArbitrumSepolia) {
+    return "both-found";
+  }
+
+  if (isBaseSepolia) {
+    return "base-sepolia";
+  } else if (isArbitrumSepolia) {
+    return "arbitrum-sepolia";
+  } else return "not-found";
+}
+
+export function replyMessage(
+  isNewAccount: boolean,
+  isWithin24Hours: boolean,
+  hasEnoughBalance: boolean,
+  network: string
+) {
+  if (hasEnoughBalance) {
+    return `You already have more than 0.5 ETH, so not transferring.`;
+  } else if (isWithin24Hours) {
+    return `You have already received funds in the last 24 hours, so not transferring.`;
+  } else if (isNewAccount) {
+    return `You are a new user, so transferring 0.05 ETH.\n`;
+  } else if (network === "not-found") {
+    return `The Guide to use the Faucet:
+  \n 1. Tag faucetbot to get the faucet.
+  \n 2. To get faucet on Arbitrum, use the keyword 'Arbitrum' or 'Arb'
+  \n 3. To get faucet on Base, use the keyword 'Base' or 'Based'
+  \n 4. The faucet will be sent to your verified wallet address.
+  \n 5. You can only get faucet once in 24 hours.
+  `;
   }
 }
