@@ -108,7 +108,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     if (hasDrippedToFID) {
       replyMsg =
-        replyMessageError("already-dripped") + hookData.data.author.fid;
+        replyMessageError("already-dripped-to-fid") + hookData.data.author.fid;
       const reply = await publishAndExit(
         replyMsg,
         hookData.data.author.username,
