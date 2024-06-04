@@ -18,10 +18,10 @@ export const replyMessageError = (error: string) => {
     return `No Verified Address found for this FID`;
   }
   if (error === "not-found") {
-    return `The Guide to use the Faucet:
-  \n 1. Tag faucetbot to get the faucet.
-  \n 2. To get faucet on Arbitrum, use the keyword 'Arbitrum' or 'Arb'
-  \n 3. To get faucet on Base, use the keyword 'Base' or 'Based'
+    return `Guide:
+  \n 1. Tag faucetbot.
+  \n 2. For Arbitrum, use the keyword 'Arbitrum' or 'Arb'
+  \n 3. For Base, use the keyword 'Base'.
   \n 4. The faucet will be sent to your verified wallet address.
   \n 5. Do not add both networks in the same message.
   \n 6. You can only get faucet once in 24 hours.
