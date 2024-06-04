@@ -41,12 +41,13 @@ async function getBalance(address: string, chain: string) {
 }
 
 // Function to return false if the user has new account
-export async function isNewAccount(address: string) {
+export async function isNewAccount(address: string, network: string) {
   try {
-    const arbitrumBalance = await getBalance(address, "arbitrum");
+
+    const l2Balance = await getBalance(address, network.split("-")[0]);
     const mainnetBalance = await getBalance(address, "mainnet");
     return (
-      parseFloat(arbitrumBalance) < 0.001 && parseFloat(mainnetBalance) < 0.001
+      parseFloat(l2Balance) < 0.001 && parseFloat(mainnetBalance) < 0.001
     );
   } catch (error) {
     console.error("Error in isNewAccount", error);

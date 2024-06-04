@@ -4,9 +4,6 @@ import { Cast as CastV2 } from "@neynar/nodejs-sdk/build/neynar-api/v2/openapi-f
 import { createHmac } from "crypto";
 import {
   isNewAccount,
-  alreadyAptFunds,
-  // sendTransaction,
-  checkLastTokenDripWithin24Hours,
   analyseCastText,
 } from "@/app/utils";
 import {
@@ -15,7 +12,7 @@ import {
   isTokenDrippedToFidInLast24Hours,
   dripTokensToAddress,
 } from "@/app/utils/contract";
-import { replyMessageError } from "@/app/constants";
+import { replyMessageError, replyMessageSuccess } from "@/app/constants";
 
 export async function POST(req: NextRequest, res: NextResponse) {
   console.log("//////////////////////////");
@@ -73,7 +70,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     const network = await analyseCastText(hookData.data.text);
 
-    if (network === "not-found" || "both-found") {
+    if (network === "not-found" || network === "both-found") {
       replyMsg = replyMessageError("not-found");
       const reply = await publishAndExit(
         replyMsg,
@@ -137,6 +134,11 @@ export async function POST(req: NextRequest, res: NextResponse) {
     }
 
     // TODO: Check if the person has mainnet balance than drip more
+    const isNew = await isNewAccount(userAddress, network);
+    console.log("isNew", isNew);
+    if (isNew) {
+      fundsToSend = 500000000000000000n;
+    }
 
     console.log("///////////////////////");
     console.log("DRIPPING TOKENS");
@@ -159,7 +161,8 @@ export async function POST(req: NextRequest, res: NextResponse) {
           message: reply,
         });
       }
-      replyMsg = replyMessageSuccess(network);
+      replyMsg = replyMessageSuccess(network, fundsToSend, hash);
+
       const reply = await publishAndExit(
         replyMsg,
         hookData.data.author.username,
@@ -181,29 +184,12 @@ export async function POST(req: NextRequest, res: NextResponse) {
       });
     }
 
-
-    // const reply = await neynarClient.publishCast(
-    //   process.env.SIGNER_UUID,
-    //   `${replyMsg} @${hookData.data.author.username} ${
-    //     failed
-    //       ? "❌ \n You can get faucets from here:  https://warpcast.com/happysingh/0x59b89007"
-    //       : "✅"
-    //   }`,
-    //   {
-    //     replyTo: hookData.data.hash,
-    //   }
-    // );
-    // console.log("reply:", reply);
-
-    // return NextResponse.json({
-    //   message: reply,
-    // });
-
   } catch (e) {
     console.log(e);
     const reply = await neynarClient.publishCast(
       process.env.SIGNER_UUID || "",
-      `Error Occurred: @happysingh look into this`
+      `Error Occurred: @happysingh look into this
+      \n Meanwhile \n You can get Arbitrum Sepolia faucet from here: https://warpcast.com/happysingh/0xfcb6dd55`
     );
     return NextResponse.json({
       message: reply,
