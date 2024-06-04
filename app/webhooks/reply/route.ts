@@ -30,18 +30,18 @@ export async function POST(req: NextRequest, res: NextResponse) {
       );
     }
 
-    // const sig = req.headers.get("X-Neynar-Signature");
-    // if (!sig) {
-    //   throw new Error("Neynar signature missing from request headers");
-    // }
+    const sig = req.headers.get("X-Neynar-Signature");
+    if (!sig) {
+      throw new Error("Neynar signature missing from request headers");
+    }
 
-    // const hmac = createHmac("sha512", webhookSecret);
-    // hmac.update(body);
-    // const generatedSignature = hmac.digest("hex");
+    const hmac = createHmac("sha512", webhookSecret);
+    hmac.update(body);
+    const generatedSignature = hmac.digest("hex");
 
-    // if (generatedSignature !== sig) {
-    //   throw new Error("Invalid webhook signature");
-    // }
+    if (generatedSignature !== sig) {
+      throw new Error("Invalid webhook signature");
+    }
 
     const hookData = JSON.parse(body) as {
       created_at: number;
