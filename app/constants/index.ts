@@ -61,9 +61,9 @@ export const replyMessageSuccess = (
   const amountInEth = formatEther(amount, "wei");
 
   if (network === "base-sepolia") {
-    return `${amount} transferred successfully. Hash: https://sepolia.basescan.org/tx/${hash}`;
+    return `${amountInEth} ETH transferred successfully. Hash: https://sepolia.basescan.org/tx/${hash}`;
   }
   else {
-    return `${amount} transferred successfully. Hash: https://sepolia.arbiscan.io/tx/${hash}`;
+    return `${amountInEth} ETH transferred successfully. Hash: https://sepolia.arbiscan.io/tx/${hash}`;
   }
 };
