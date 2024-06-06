@@ -13,6 +13,7 @@ import {
   dripTokensToAddress,
 } from "@/app/utils/contract";
 import { replyMessageError, replyMessageSuccess } from "@/app/constants";
+import { ReactionType } from "@neynar/nodejs-sdk";
 
 export async function POST(req: NextRequest, res: NextResponse) {
   console.log("//////////////////////////");
@@ -30,6 +31,9 @@ export async function POST(req: NextRequest, res: NextResponse) {
       );
     }
 
+    // Verify the webhook signature
+    /////////////////////////////////
+
     const sig = req.headers.get("X-Neynar-Signature");
     if (!sig) {
       throw new Error("Neynar signature missing from request headers");
@@ -42,6 +46,8 @@ export async function POST(req: NextRequest, res: NextResponse) {
     if (generatedSignature !== sig) {
       throw new Error("Invalid webhook signature");
     }
+
+    /////////////////////////////////
 
     const hookData = JSON.parse(body) as {
       created_at: number;
@@ -201,6 +207,7 @@ async function publishAndExit(message: string, username: string, hash: string) {
   if (process.env.SIGNER_UUID === undefined) {
     throw new Error("SIGNER_UUID is not set in .env");
   }
+  neynarClient.publishReactionToCast(process.env.SIGNER_UUID, ReactionType.Like, hash);
   const reply = await neynarClient.publishCast(
     process.env.SIGNER_UUID,
     `${message} @${username}`,
