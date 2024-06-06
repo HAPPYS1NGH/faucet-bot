@@ -70,7 +70,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     const network = await analyseCastText(hookData.data.text);
 
-    if (network === "not-found" || network === "both-found") {
+    if (network === "not-found" || network === "multiple-found") {
       replyMsg = replyMessageError("not-found");
       const reply = await publishAndExit(
         replyMsg,

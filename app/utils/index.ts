@@ -5,7 +5,8 @@ import {
   sepoliaClient,
   baseClient,
   baseSepoliaClient,
-  walletArbitrumClient,
+  modeSepoliaClient,
+  modeClient,
 } from "@/app/utils/client";
 import { formatEther } from "viem";
 
@@ -14,9 +15,6 @@ async function getBalance(address: string, chain: string) {
   switch (chain) {
     case "sepolia":
       client = sepoliaClient;
-      break;
-    case "arbitrum-sepolia":
-      client = arbitrumSepoliaClient;
       break;
     case "mainnet":
       client = mainnetClient;
@@ -27,8 +25,17 @@ async function getBalance(address: string, chain: string) {
     case "base":
       client = baseClient;
       break;
+    case "mode":
+      client = modeClient;
+      break;
+    case "arbitrum-sepolia":
+      client = arbitrumSepoliaClient;
+      break;
     case "base-sepolia":
       client = baseSepoliaClient;
+      break;
+    case "mode-sepolia":
+      client = modeSepoliaClient;
       break;
     default:
       throw new Error(`Unsupported chain ${chain}`);
@@ -152,22 +159,27 @@ export async function analyseCastText(data: string) {
   // Define regex patterns with broader matching for each faucet
   const baseSepoliaPattern = /\b(b[a|e]s[ae]?|base[- ]?sepolia)\b/;
   const arbitrumSepoliaPattern = /\b(a?r?b[i|t|r|u|m]*|arbitrum[- ]?sepolia)\b/;
+  const modeSepoliaPattern = /\b(mode|mode[- ]?sepolia)\b/;
   // Check for words like how to use or guide
   // const guidePattern = /\b(guide|how to use)\b/;
 
   // Test the patterns against the input text
   const isBaseSepolia = baseSepoliaPattern.test(text);
   const isArbitrumSepolia = arbitrumSepoliaPattern.test(text);
+  const isModeSepolia = modeSepoliaPattern.test(text);
   console.log("isBaseSepolia", isBaseSepolia);
   console.log("isArbitrumSepolia", isArbitrumSepolia);
-  if (isBaseSepolia && isArbitrumSepolia) {
-    return "both-found";
+  if (isBaseSepolia && isArbitrumSepolia || isBaseSepolia && isModeSepolia || isArbitrumSepolia && isModeSepolia) {
+    return "multiple-found";
   }
 
   if (isBaseSepolia) {
     return "base-sepolia";
   } else if (isArbitrumSepolia) {
     return "arbitrum-sepolia";
+  }
+  else if (isModeSepolia) {
+    return "mode-sepolia";
   } else return "not-found";
 }
 
@@ -188,7 +200,7 @@ export function replyMessage(
   \n 1. Tag faucetbot to get the faucet.
   \n 2. To get faucet on Arbitrum, use the keyword 'Arbitrum' or 'Arb'
   \n 3. To get faucet on Base, use the keyword 'Base' or 'Based'
-  \n 4. The faucet will be sent to your verified wallet address.
+  \n 4. For Mode, use the keyword 'Mode'.
   \n 5. You can only get faucet once in 24 hours.
   `;
   }
