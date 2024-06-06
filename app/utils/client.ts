@@ -12,6 +12,8 @@ import {
   mainnet,
   base,
   arbitrum,
+  modeTestnet,
+  mode
 } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 // import { Alchemy, Network } from "alchemy-sdk";
@@ -21,7 +23,6 @@ const baseSepoliaRpc = process.env.BASE_SEPOLIA_RPC;
 const arbitrumSepoliaRpc = process.env.ARBITRUM_SEPOLIA_RPC;
 const mainnetRpc = process.env.MAINNET_RPC;
 const baseRpc = process.env.BASE_RPC;
-
 const arbitrumRpc = process.env.ARBITRUM_RPC;
 
 const account = privateKeyToAccount(`0x${process.env.PRIVATE_KEY}`);
@@ -62,6 +63,10 @@ export const arbitrumClient = createPublicClient({
     http("https://eth-arbitrum.public.blastapi.io"),
   ]),
 });
+export const modeClient = createPublicClient({
+  chain: mode,
+  transport: http("https://mainnet.mode.network"),
+})
 
 export const baseSepoliaClient = createPublicClient({
   chain: baseSepolia,
@@ -72,6 +77,17 @@ export const baseClient = createPublicClient({
   chain: base,
   transport: http(baseRpc),
 });
+
+export const modeSepoliaClient = createPublicClient({
+  chain: modeTestnet,
+  transport: http("https://sepolia.mode.network"),
+}).extend(publicActions);
+
+export const walletModeClient = createWalletClient({
+  account,
+  chain: modeTestnet,
+  transport: http("https://sepolia.mode.network"),
+}).extend(publicActions);
 
 export const walletArbitrumClient = createWalletClient({
   account,
@@ -94,10 +110,16 @@ export function getChainClient(chain: string, isWallet = false) {
       return mainnetClient;
     case "arbitrum":
       return arbitrumClient;
+    case "base":
+      return baseClient;
+    case "mode":
+      return modeClient;
     case "arbitrum-sepolia":
       return isWallet ? walletArbitrumClient : arbitrumSepoliaClient;
     case "base-sepolia":
       return isWallet ? walletBaseClient : baseSepoliaClient;
+    case "mode-sepolia":
+      return isWallet ? walletModeClient : modeSepoliaClient;
     default:
       throw new Error(`Unsupported chain ${chain}`);
   }
