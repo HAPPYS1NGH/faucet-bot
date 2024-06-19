@@ -1,6 +1,6 @@
 import { formatEther } from "viem";
 import { abi } from "./abi";
-import { arbitrumSepolia, baseSepolia } from "./address";
+import { arbitrumSepolia, baseSepolia, modeSepolia } from "./address";
 
 export const config = {
   "base-sepolia": {
@@ -12,7 +12,7 @@ export const config = {
     abi,
   },
   "mode-sepolia": {
-    address: baseSepolia,
+    address: modeSepolia,
     abi,
   },
 };

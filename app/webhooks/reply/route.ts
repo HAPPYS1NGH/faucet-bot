@@ -58,7 +58,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
 
     let replyMsg = "";
     let failed = false;
-    let fundsToSend = 100000000000000000n;
+    let fundsToSend = 10000000000000000n;
 
     const userAddress = hookData.data.author.verified_addresses.eth_addresses[0];
 
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest, res: NextResponse) {
     const isNew = await isNewAccount(userAddress, network);
     console.log("isNew", isNew);
     if (isNew) {
-      fundsToSend = 500000000000000000n;
+      fundsToSend = 50000000000000000n;
     }
 
     console.log("///////////////////////");
