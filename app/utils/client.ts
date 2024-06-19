@@ -25,7 +25,7 @@ const mainnetRpc = process.env.MAINNET_RPC;
 const baseRpc = process.env.BASE_RPC;
 const arbitrumRpc = process.env.ARBITRUM_RPC;
 
-const account = privateKeyToAccount(`0x${process.env.PRIVATE_KEY}`);
+export const account = privateKeyToAccount(`0x${process.env.PRIVATE_KEY}`);
 
 export const sepoliaClient = createPublicClient({
   chain: sepolia,
